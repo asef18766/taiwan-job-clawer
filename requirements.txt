@@ -1,0 +1,5 @@
+beautifulsoup4
+requests
+opencv-python
+pytesseract
+PyPDF2
