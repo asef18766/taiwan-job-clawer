@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 import csv
 from datetime import datetime
 
-
+MONTH = 10
 def create_sess(
     account="L120966821",
     passwd="Zzaaqq831109!"
@@ -77,6 +77,7 @@ def add_course(sess: requests.Session, dates: List[Tuple[int, int, int]], time_p
     hrs, mins = (tp[1] - tp[0]).seconds // 3600, ((tp[1] - tp[0]).seconds // 60) % 60
     apply_info = []
 
+    print("GetCaseNoListAtHome")
     with sess.get("https://onjobtraining.wda.gov.tw/WdaRestart/Api/Labor/GetCaseNoListAtHome/") as resp:
         data = resp.json()
 
@@ -95,6 +96,7 @@ def add_course(sess: requests.Session, dates: List[Tuple[int, int, int]], time_p
     apply_info = apply_info[0]
     # print(apply_info)
     for d in usr_dates:
+        print("SaveCourseRegisterAtHome:", d)
         with sess.post("https://onjobtraining.wda.gov.tw/WdaRestart/Api/Labor/SaveCourseRegisterAtHome/", json={
             "registerId": "", 
             "isWithdraw": False, 
@@ -115,8 +117,10 @@ def add_course(sess: requests.Session, dates: List[Tuple[int, int, int]], time_p
                 print(resp.status_code)
                 raise Exception(resp.text)
     usr_dates_fmt = [ d.strftime("%Y-%m-%dT00:00:00") for d in usr_dates ]
+    print("start QueryCourseReplayAtHome")
     with sess.get("https://onjobtraining.wda.gov.tw/WdaRestart/Api/Labor/QueryCourseReplayAtHome/?param.laborId=&param.keyword=&param.sorting=CreatedDate&param.sortingDesc=true&param.currentPage=1&param.pageSize=1000&") as resp:
         data = resp.json()["data"]
+        print("got QueryCourseReplayAtHome")
         for d in data:
             if d["expectedDate"] in usr_dates_fmt:
                 with sess.post("https://onjobtraining.wda.gov.tw/WdaRestart/Api/Labor/SaveCourseReplayAtHome/", json={
@@ -133,6 +137,7 @@ def add_course(sess: requests.Session, dates: List[Tuple[int, int, int]], time_p
                     "caseNo":None,
                     "applyDate":d["applyDate"]
                 }) as resp:
+                    print("SaveCourseReplayAtHome:", d["expectedDate"])
                     if resp.status_code != 200 or resp.json()["data"] != "儲存成功":
                         print(resp.status_code)
                         print(resp.text)
@@ -140,17 +145,19 @@ def add_course(sess: requests.Session, dates: List[Tuple[int, int, int]], time_p
 
 
 def main():
-    with open('usr_table.csv', newline='', encoding="utf-8") as csvfile:
+    with open('account.csv', newline='', encoding="utf-8") as csvfile:
         rows = csv.reader(csvfile)
         for idx, row in enumerate(rows):
             usr_r_name = row[1]
             usr_com_name = row[2]
             usr_id = row[3]
             usr_pw = row[6]
-            if row[11] == "":
+            if row[12] == "":
                 continue
-            if idx < 122:
+            '''
+            if idx < 1:
                 continue
+            '''
             try:
                 print(f"processing {usr_r_name}...")
                 sess = create_sess(usr_id, usr_pw)
@@ -159,9 +166,9 @@ def main():
                 print(f"{usr_r_name} can not login!", file=open(
                     "except.log", "a", encoding="utf-8"))
                 continue
-            usr_c_dates = [(2022, 10, int(d)) for d in row[11].split(",")]
+            usr_c_dates = [(2022, MONTH, int(d)) for d in row[12].split(",")]
             usr_c_tp = tuple(tuple(map(int, i.split(":")))
-                             for i in row[9].split("~"))
+                             for i in row[10].split("~"))
 
             add_course(sess, usr_c_dates, usr_c_tp)
             #append_to_csv("fin_info.csv", [usr_r_name, usr_com_name] + get_usr_fin_info(sess))

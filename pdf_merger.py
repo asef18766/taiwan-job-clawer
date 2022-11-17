@@ -4,17 +4,14 @@ from typing import List
 from PyPDF2 import PdfFileReader, PdfFileWriter
 
 for com in [
-    "常潤",
-    "愛普笙",
-    "榕祥",
-    "慶沅"
+    "高桀"
 ]:
     users = []
     with open('account.csv', newline='', encoding="utf-8") as csvfile:
         print(f"processing {com}")
         rows = csv.reader(csvfile)
         for rid, row in enumerate(rows):
-            if row[4] != com:
+            if row[2] != com:
                 continue
             username = row[1]
             users.append(username)

@@ -13,7 +13,7 @@ user_headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36"
 }
 total_time = 0
-
+MONTH = 10
 
 def send_get_req_txt(s: requests.Session, url: str, req_header=user_headers):
     with s.get(url, headers=req_header) as resp:
@@ -315,8 +315,8 @@ def main(
         pg_idx = 1
         all_course = []
 
-        st_date = (2022, 9, dt)
-        en_date = (2022, 9, dt)
+        st_date = (2022, MONTH, dt)
+        en_date = (2022, MONTH, dt)
         print(f"process day {dt}")
         while True:
             cids, cids_time = query_course(sess, pg_idx, st_date, en_date)
@@ -355,20 +355,20 @@ def main(
         download_region(sess, (2022, st_date[1], i), f"{username}/勞動部勞動力發展數位服務平台線上課程學習紀錄{str(st_date[1]).zfill(2)}.{str(i).zfill(2)}.pdf") 
 
 if __name__ == "__main__":
-    # pytesseract.pytesseract.tesseract_cmd = "C:\\Users\\User\\Documents\\softwares\\tesseract-ocr\\tesseract.exe"
-    pytesseract.pytesseract.tesseract_cmd = r"D:\tesseract\tesseract.exe"
+    pytesseract.pytesseract.tesseract_cmd = "C:\\Users\\User\\Documents\\softwares\\tesseract-ocr\\tesseract.exe"
+    #pytesseract.pytesseract.tesseract_cmd = r"D:\tesseract\tesseract.exe"
     with open('account.csv', newline='', encoding="utf-8") as csvfile:
         rows = csv.reader(csvfile)
 
-        ST_FM = 0
+        ST_FM = 32
         for rid, row in enumerate(rows):
             total_time = 0
             if rid < ST_FM:
                 continue
 
             username = row[1]
-            user_email = row[2]
-            passwd = row[3]
+            user_email = row[4]
+            passwd = row[5]
             print(username, user_email, passwd)
             if not os.path.exists(username):
                 os.mkdir(username)
