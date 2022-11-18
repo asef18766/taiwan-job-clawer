@@ -36,8 +36,11 @@ def create_sess(
     }) as resp:
         res = resp.json()
         if not res["IsSuccess"]:
-            print(res)
-            raise Exception(res["ExceptionMessage"])
+            if len(res["ExceptionMessage"]) == 0:
+                print("dectect invaild account or password")
+                exit(87)
+            else:
+                raise Exception(res["ExceptionMessage"])
     sess.get("https://onjobtraining.wda.gov.tw/WDARestart/Account/Sso")
     return sess
 
