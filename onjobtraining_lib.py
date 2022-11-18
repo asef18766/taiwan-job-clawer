@@ -3,6 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 import csv
 from datetime import datetime
+import sys
 
 MONTH = 10
 def create_sess(
@@ -37,8 +38,8 @@ def create_sess(
         res = resp.json()
         if not res["IsSuccess"]:
             if len(res["ExceptionMessage"]) == 0:
-                print("dectect invaild account or password")
-                exit(87)
+                print("dectect invaild account or password", file=sys.stderr)
+                exit(0)
             else:
                 raise Exception(res["ExceptionMessage"])
     sess.get("https://onjobtraining.wda.gov.tw/WDARestart/Account/Sso")
