@@ -5,7 +5,6 @@ import csv
 from datetime import datetime
 import sys
 
-MONTH = 10
 def create_sess(
     account="L120966821",
     passwd="Zzaaqq831109!"
@@ -96,7 +95,13 @@ def add_course(sess: requests.Session, dates: List[Tuple[int, int, int]], time_p
             else:
                 apply_info.append(d)
 
-    assert len(apply_info) == 1
+    if len(apply_info) == 0:
+        print("detect empty apply plan", file=sys.stderr)
+        exit(0)
+    elif len(apply_info) != 1:
+        print("detect multi apply plan", file=sys.stderr)
+        exit(0)
+    
     apply_info = apply_info[0]
     # print(apply_info)
     for d in usr_dates:
@@ -170,6 +175,7 @@ def main():
                 print(f"{usr_r_name} can not login!", file=open(
                     "except.log", "a", encoding="utf-8"))
                 continue
+            MONTH = 10
             usr_c_dates = [(2022, MONTH, int(d)) for d in row[12].split(",")]
             usr_c_tp = tuple(tuple(map(int, i.split(":")))
                              for i in row[10].split("~"))
