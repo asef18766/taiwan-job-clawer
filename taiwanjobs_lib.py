@@ -3,7 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 import csv
 import os
-import shutil
+import sys
 from csv import writer
 import cv2
 from pytesseract import image_to_string
@@ -13,7 +13,6 @@ user_headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36"
 }
 total_time = 0
-MONTH = 10
 
 def send_get_req_txt(s: requests.Session, url: str, req_header=user_headers):
     with s.get(url, headers=req_header) as resp:
@@ -190,10 +189,14 @@ def add_time(cids:List[Tuple[str, str]], cids_times:List[int]):
         total_time += cids_times[idx]
 
 def main(
+    fname:str,
+    month:int,
+    username:str,
     user_email="a0911971848@gmail.com",
-    user_passwd="Zzaaqq831109!",
-    fname="res.pdf"
-):
+    user_passwd="Zzaaqq831109!"
+)->int:
+    global total_time
+    total_time = 0
     logon_url = ""
     sess = requests.session()
 
@@ -277,8 +280,8 @@ def main(
                 # shutil.copyfile("capcha.jpg", f"dataset/{ver_code}.jpg")
             elif resp.status_code == 200:
                 if resp.text.find("帳號或密碼錯誤，請重新輸入!") != -1:
-                    print(f"user {username} has wrong password !")
-                    exit(-1)
+                    print(f"user {username} has wrong password !", sys.stderr)
+                    exit(0)
                 elif resp.text.find("圖型驗證碼輸入有誤，請重新輸入") != -1:
                     print("retry ocr")
                 elif resp.text.find("您的密碼即將到期") != -1 or resp.text.find("建議您立即變更密碼，是否立即變更？") != -1:
@@ -315,8 +318,8 @@ def main(
         pg_idx = 1
         all_course = []
 
-        st_date = (2022, MONTH, dt)
-        en_date = (2022, MONTH, dt)
+        st_date = (2022, month, dt)
+        en_date = (2022, month, dt)
         print(f"process day {dt}")
         while True:
             cids, cids_time = query_course(sess, pg_idx, st_date, en_date)
@@ -350,10 +353,11 @@ def main(
         del_to_cart(sess, "https://portal.wda.gov.tw/mooc/print_profile.php")
     
     send_get_req_txt(sess, "https://portal.wda.gov.tw/mooc/co_search_record.php")
-    for i in range(1, 31):
+    for i in range(1, 32):
         print(f"process day {i}")
         download_region(sess, (2022, st_date[1], i), f"{username}/勞動部勞動力發展數位服務平台線上課程學習紀錄{str(st_date[1]).zfill(2)}.{str(i).zfill(2)}.pdf") 
-
+    print(f"total_time:{total_time}")
+    return total_time
 if __name__ == "__main__":
     pytesseract.pytesseract.tesseract_cmd = "C:\\Users\\User\\Documents\\softwares\\tesseract-ocr\\tesseract.exe"
     #pytesseract.pytesseract.tesseract_cmd = r"D:\tesseract\tesseract.exe"
@@ -362,7 +366,6 @@ if __name__ == "__main__":
 
         ST_FM = 32
         for rid, row in enumerate(rows):
-            total_time = 0
             if rid < ST_FM:
                 continue
 
@@ -372,7 +375,7 @@ if __name__ == "__main__":
             print(username, user_email, passwd)
             if not os.path.exists(username):
                 os.mkdir(username)
-            main(user_email, passwd, username + ".pdf")
+            #main(user_email, passwd, username + ".pdf")
             print(f"total_time: {total_time} min")
             with open('time.csv', 'a', newline='', encoding="utf-8") as f_object:  
                 # Pass the CSV  file object to the writer() function
