@@ -35,6 +35,8 @@ def main():
 if __name__ == "__main__":
     if platform.node() == "LAPTOP-KQCO29TK":
         pytesseract.pytesseract.tesseract_cmd = "C:\\Users\\User\\Documents\\softwares\\tesseract-ocr\\tesseract.exe"
+    elif platform.node() == "DESKTOP-863E7C0":
+        pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
     else:
         raise Exception("please define tesseract.exe path")
     main()
