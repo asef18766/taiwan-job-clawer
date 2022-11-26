@@ -13,3 +13,7 @@ def check_date_exsist(year:int, month:int, day:int, hrs=0, mins=0, secs=0)->bool
         else:
             raise e
     return True
+
+def datetime_from_tw_fmt(s:str)->datetime:
+    y, m, d = s.split("/")
+    return datetime(int(y) + 1911, int(m), int(d))

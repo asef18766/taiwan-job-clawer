@@ -1,10 +1,12 @@
 from typing import List, Tuple
 import requests
+from requests import Session
 from bs4 import BeautifulSoup
 import csv
 from datetime import datetime
 import sys
 from logging import info
+from utils import datetime_from_tw_fmt
 
 def create_sess(
     account="L120966821",
@@ -38,7 +40,7 @@ def create_sess(
         res = resp.json()
         if not res["IsSuccess"]:
             if len(res["ExceptionMessage"]) == 0:
-                info("dectect invaild account or password", file=sys.stderr)
+                print("dectect invaild account or password", file=sys.stderr)
                 exit(0)
             else:
                 raise Exception(res["ExceptionMessage"])
@@ -102,10 +104,10 @@ def add_course(sess: requests.Session, dates: List[Tuple[int, int, int]], time_p
                 apply_info.append(d)
 
     if len(apply_info) == 0:
-        info("detect empty apply plan", file=sys.stderr)
+        print("detect empty apply plan", file=sys.stderr)
         exit(0)
     elif len(apply_info) != 1:
-        info("detect multi apply plan", file=sys.stderr)
+        print("detect multi apply plan", file=sys.stderr)
         exit(0)
     
     apply_info = apply_info[0]
@@ -188,6 +190,29 @@ def main():
 
             add_course(sess, usr_c_dates, usr_c_tp)
             #append_to_csv("fin_info.csv", [usr_r_name, usr_com_name] + get_usr_fin_info(sess))
+def get_writeoff_data(sess:Session, year_n_month:Tuple[int, int])->dict:
+    usr_date = datetime(year_n_month[0], year_n_month[1], 1)
+    plan_key = None
+    with sess.get("https://onjobtraining.wda.gov.tw/WdaRestart/Api/Labor/GetCaseNoListWriteOff/") as resp:
+        for k in resp.json():
+            start_date, end_date = k["name"][13:-1].split(" ~ ")
+            start_date = datetime_from_tw_fmt(start_date)
+            end_date = datetime_from_tw_fmt(end_date)
+            if start_date <= usr_date <= end_date:
+                if plan_key != None:
+                    raise Exception("detect dulplicated range")
+                plan_key = k["key"]
+    if plan_key is None:
+        raise Exception("could not find any matched key")
+    with sess.get(f"https://onjobtraining.wda.gov.tw/WdaRestart/Api/Labor/QueryLaborWriteOff/?param.year={year_n_month[0]}&param.applyId={plan_key}&") as resp:
+        for k in resp.json():
+            if usr_date == datetime.strptime(k["writeOffMonth"], "%Y-%m-%dT%H:%M:%S"):
+                return k
+        else:
+            raise Exception("could not find specify month")
+
+def get_audit_result(sess:Session, year_n_month:Tuple[int, int])->str:
+    return get_writeoff_data(sess, year_n_month)["writeOffResult"]
 
 if __name__ == "__main__":
     main()

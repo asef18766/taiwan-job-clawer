@@ -283,7 +283,7 @@ def main(
                 # shutil.copyfile("capcha.jpg", f"dataset/{ver_code}.jpg")
             elif resp.status_code == 200:
                 if resp.text.find("帳號或密碼錯誤，請重新輸入!") != -1:
-                    info(f"user {username} has wrong password !", file=sys.stderr)
+                    print(f"user {username} has wrong password !", file=sys.stderr)
                     exit(0)
                 elif resp.text.find("圖型驗證碼輸入有誤，請重新輸入") != -1:
                     info("retry ocr")
