@@ -2,11 +2,10 @@ from typing import List, Tuple
 import requests
 from requests import Session
 from bs4 import BeautifulSoup
-import csv
 from datetime import datetime
 import sys
 from logging import info
-from utils import datetime_from_tw_fmt
+from utils import datetime_from_tw_fmt, append_to_csv
 
 def create_sess(
     account="L120966821",
@@ -59,11 +58,6 @@ def get_usr_fin_info(sess: requests.Session) -> List[str]:
             usr_data["finAccount"]
         ]
 
-
-def append_to_csv(fname: str, line: List[str]):
-    with open(fname, 'a', newline='', encoding="utf-8") as csvfile:
-        writer = csv.writer(csvfile)
-        writer.writerow(line)
 
 def del_course(sess: requests.Session, cid:str):
     with sess.get(f"https://onjobtraining.wda.gov.tw/WdaRestart/Api/Labor/DeleteCourseRegisterAtHome/?registerId={cid}") as resp:
@@ -160,36 +154,6 @@ def add_course(sess: requests.Session, dates: List[Tuple[int, int, int]], time_p
                         info(resp.text)
                         raise Exception()
 
-
-def main():
-    with open('account.csv', newline='', encoding="utf-8") as csvfile:
-        rows = csv.reader(csvfile)
-        for idx, row in enumerate(rows):
-            usr_r_name = row[1]
-            usr_com_name = row[2]
-            usr_id = row[3]
-            usr_pw = row[6]
-            if row[12] == "":
-                continue
-            '''
-            if idx < 1:
-                continue
-            '''
-            try:
-                info(f"processing {usr_r_name}...")
-                sess = create_sess(usr_id, usr_pw)
-                info("login done!")
-            except:
-                info(f"{usr_r_name} can not login!", file=open(
-                    "except.log", "a", encoding="utf-8"))
-                continue
-            MONTH = 10
-            usr_c_dates = [(2022, MONTH, int(d)) for d in row[12].split(",")]
-            usr_c_tp = tuple(tuple(map(int, i.split(":")))
-                             for i in row[10].split("~"))
-
-            add_course(sess, usr_c_dates, usr_c_tp)
-            #append_to_csv("fin_info.csv", [usr_r_name, usr_com_name] + get_usr_fin_info(sess))
 def get_writeoff_data(sess:Session, year_n_month:Tuple[int, int])->dict:
     usr_date = datetime(year_n_month[0], year_n_month[1], 1)
     plan_key = None
@@ -214,5 +178,4 @@ def get_writeoff_data(sess:Session, year_n_month:Tuple[int, int])->dict:
 def get_audit_result(sess:Session, year_n_month:Tuple[int, int])->str:
     return get_writeoff_data(sess, year_n_month)["writeOffResult"]
 
-if __name__ == "__main__":
-    main()
+
