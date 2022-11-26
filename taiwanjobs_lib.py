@@ -185,8 +185,9 @@ def ocr(mode="--psm", model=6, imgname="capcha.jpg") -> str:
 
 def add_time(cids:List[Tuple[str, str]], cids_times:List[int]):
     for idx, (_, nid) in enumerate(cids):
-        if nid != '0':
-            continue
+        #if nid != '0':
+        #    info(f"get nid {nid}, skip add time")
+        #    continue
         info(f"add time {cids_times[idx]}")
         global total_time
         total_time += cids_times[idx]
@@ -337,7 +338,7 @@ def main(
                 info(f"detect null page on {pg_idx}")
                 break
             all_course += cids
-            info(cids)
+            info(f"cids: {cids}")
             
             add_time(cids, cids_time)
             
