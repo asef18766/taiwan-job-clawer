@@ -9,6 +9,8 @@ import cv2
 from pytesseract import image_to_string
 import pytesseract
 from logging import info
+from utils import  check_date_exsist
+
 
 user_headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36"
@@ -321,6 +323,9 @@ def main(
 
         st_date = (2022, month, dt)
         en_date = (2022, month, dt)
+        if not check_date_exsist(2022, month, dt):
+            continue
+    
         info(f"process day {dt}")
         while True:
             cids, cids_time = query_course(sess, pg_idx, st_date, en_date)
@@ -355,6 +360,8 @@ def main(
     
     send_get_req_txt(sess, "https://portal.wda.gov.tw/mooc/co_search_record.php")
     for i in range(1, 32):
+        if not check_date_exsist(2022, month, dt):
+            continue
         info(f"process day {i}")
         download_region(sess, (2022, st_date[1], i), f"{username}/勞動部勞動力發展數位服務平台線上課程學習紀錄{str(st_date[1]).zfill(2)}.{str(i).zfill(2)}.pdf") 
     info(f"total_time:{total_time}")

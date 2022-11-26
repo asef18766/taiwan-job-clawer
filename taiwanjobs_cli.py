@@ -18,8 +18,8 @@ def main():
     args = parser.parse_args()
     if not os.path.exists(f"{args.dst_f}/{args.username}"):
         os.makedirs(f"{args.dst_f}/{args.username}", exist_ok=True)
-    os.chdir(f"{args.dst_f}/{args.username}")
-    create_logger_to_file(datetime.now().strftime("%Y-%m-%d-%H-%M-%S") + ".log1")
+    os.chdir(f"{args.dst_f}")
+    create_logger_to_file(f"{args.username}/" + datetime.now().strftime("%Y-%m-%d-%H-%M-%S") + ".log1")
     total_time = taiwanjob_main(
         args.fname_suffix, 
         args.month, 
