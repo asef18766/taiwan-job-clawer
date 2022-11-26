@@ -4,7 +4,8 @@ from taiwanjobs_lib import main as taiwanjob_main
 from csv import writer
 import platform
 import pytesseract
-
+from utils import create_logger_to_file
+from datetime import datetime
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("username",     help="user Chinese name")
@@ -18,6 +19,7 @@ def main():
     if not os.path.exists(f"{args.dst_f}/{args.username}"):
         os.makedirs(f"{args.dst_f}/{args.username}", exist_ok=True)
     os.chdir(f"{args.dst_f}")
+    create_logger_to_file(datetime.now().strftime("%Y-%m-%d-%H-%M-%S") + ".log1")
     total_time = taiwanjob_main(
         args.fname_suffix, 
         args.month, 

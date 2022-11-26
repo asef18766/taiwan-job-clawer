@@ -8,6 +8,7 @@ from csv import writer
 import cv2
 from pytesseract import image_to_string
 import pytesseract
+from logging import info
 
 user_headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36"
@@ -17,8 +18,8 @@ total_time = 0
 def send_get_req_txt(s: requests.Session, url: str, req_header=user_headers):
     with s.get(url, headers=req_header) as resp:
         if resp.status_code != 200:
-            print(f"status code:{resp.status_code}")
-            print(resp.text)
+            info(f"status code:{resp.status_code}")
+            info(resp.text)
             exit(-1)
         return resp.text
 
@@ -57,7 +58,7 @@ def add_to_cart(
         "referer": referer
     })
     base_url = "https://portal.wda.gov.tw/mooc/controllers/user_ajax.php"
-    print(f"add cid :{cid}")
+    info(f"add cid :{cid}")
     with sess.post(base_url, headers=cart_header, data={
         "action": "addPrintList",
         "id": cid,
@@ -65,10 +66,10 @@ def add_to_cart(
         "nid":nid
     }) as resp:
         if resp.status_code != 200:
-            print(f"status code: {resp.status_code}")
-            print(resp.text)
+            info(f"status code: {resp.status_code}")
+            info(resp.text)
             exit(-1)
-        print(f"add2cart resp:{resp.json()}")
+        info(f"add2cart resp:{resp.json()}")
 
 
 def del_to_cart(
@@ -82,17 +83,17 @@ def del_to_cart(
         "referer": referer
     })
     base_url = "https://portal.wda.gov.tw/mooc/controllers/user_ajax.php"
-    print(f"delete cart")
+    info(f"delete cart")
     with sess.post(base_url, headers=cart_header, data={
         "action": "delPrintList",
         "id": 0,
         "type": "All"
     }) as resp:
         if resp.status_code != 200:
-            print(f"status code: {resp.status_code}")
-            print(resp.text)
+            info(f"status code: {resp.status_code}")
+            info(resp.text)
             exit(-1)
-        print(f"add2cart resp:{resp.json()}")
+        info(f"add2cart resp:{resp.json()}")
 
 
 def download_region(
@@ -101,11 +102,11 @@ def download_region(
     fname: str
 ):
     base_url = f"https://portal.wda.gov.tw/mooc/co_search_record.php?stYear={date[0]}&stMonth={date[1]}&stDay={date[2]}&endYear={date[0]}&endMonth={date[1]}&endDay={date[2]}"
-    print("query date...")
+    info("query date...")
     if send_get_req_txt(sess, base_url).find("查無該時間區間的學習紀錄") != -1:
         return
 
-    print("recv data...")
+    info("recv data...")
     reg_headers = user_headers.copy()
     reg_headers.update({
         "referer": base_url,
@@ -122,8 +123,8 @@ def download_region(
         "isDetail": 0
     }) as resp:
         if resp.status_code != 200:
-            print(f"status code:{resp.status_code}")
-            print(resp.text)
+            info(f"status code:{resp.status_code}")
+            info(resp.text)
             exit(-1)
 
         with open(fname, 'wb') as f:
@@ -137,7 +138,7 @@ def query_correct_course_id_by_fancybox(
     cid:str,
     refer_date:Tuple[int, int, int]
 )->Dict[str, Tuple[str, str]]:
-    print(f"query fancybox {cid}")
+    info(f"query fancybox {cid}")
     base_url = "https://portal.wda.gov.tw/mooc/controllers/fancybox_ajax.php"
     fancybox_header = user_headers.copy()
     fancybox_header.update({
@@ -151,7 +152,7 @@ def query_correct_course_id_by_fancybox(
         "c_type":"course"
     }) as resp:
         if resp.status_code != 200:
-            print(f"status code:{resp.status_code}")
+            info(f"status code:{resp.status_code}")
             exit(-1)
         soup = BeautifulSoup(resp.text, 'html.parser')
         serials = [ 
@@ -184,7 +185,7 @@ def add_time(cids:List[Tuple[str, str]], cids_times:List[int]):
     for idx, (_, nid) in enumerate(cids):
         if nid != '0':
             continue
-        print(f"add time {cids_times[idx]}")
+        info(f"add time {cids_times[idx]}")
         global total_time
         total_time += cids_times[idx]
 
@@ -200,7 +201,7 @@ def main(
     logon_url = ""
     sess = requests.session()
 
-    print("process with initial logon...")
+    info("process with initial logon...")
     lg_txt = send_get_req_txt(sess, "https://portal.wda.gov.tw/mooc/index.php")
     soup = BeautifulSoup(lg_txt, 'html.parser')
     for link in soup.find_all('a'):
@@ -208,23 +209,23 @@ def main(
             logon_url = link.get('href')
             break
     else:
-        print("can not find logon url...?")
+        info("can not find logon url...?")
         exit(-1)
 
-    print("processing login...")
-    print(f"logon url: {logon_url}")
+    info("processing login...")
+    info(f"logon url: {logon_url}")
     login_page_txt = send_get_req_txt(sess, logon_url)
     soup = BeautifulSoup(login_page_txt, 'html.parser')
     viewstate = soup.find("input", {"id": "__VIEWSTATE"}).get("value")
     viewstate_generator = soup.find(
         "input", {"id": "__VIEWSTATEGENERATOR"}).get("value")
 
-    print(f"view state: {viewstate}")
-    print(f"viewstate generator: {viewstate_generator}")
+    info(f"view state: {viewstate}")
+    info(f"viewstate generator: {viewstate_generator}")
 
     # capcha login
     while True:
-        print("obtaining capcha image...")
+        info("obtaining capcha image...")
         capcha_txt = send_get_req_txt(
             sess,
             "https://sso.taiwanjobs.gov.tw/Internet/jobwanted/ValidateImage.aspx"
@@ -233,7 +234,7 @@ def main(
         capcha_img_url = ""
         soup = BeautifulSoup(capcha_txt, 'html.parser')
         for link in soup.find_all('img'):
-            # print(link.get('src'))
+            # info(link.get('src'))
             if str(link.get('src')).startswith("util/ValidateNumber.ashx?"):
                 capcha_img_url = link.get('src')
                 break
@@ -244,11 +245,11 @@ def main(
             "Accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8"
         })
 
-        print(f"requesting img url {capcha_img_url}")
+        info(f"requesting img url {capcha_img_url}")
         with sess.get(capcha_img_url, headers=img_header) as resp:
             if resp.status_code != 200:
-                print(f"status code:{resp.status_code}")
-                print(resp.text)
+                info(f"status code:{resp.status_code}")
+                info(resp.text)
                 exit(-1)
 
             with open("capcha.jpg", 'wb') as f:
@@ -257,7 +258,7 @@ def main(
 
         ver_code = ocr()
         if len(ver_code) != 5:
-            print("retry ocr")
+            info("retry ocr")
             continue
         with sess.post(logon_url, headers=user_headers, data={
             "__EVENTTARGET": "",
@@ -271,21 +272,21 @@ def main(
             "ctl00$CPH1$confirm_txt": ""
 
         }, allow_redirects=False) as resp:
-            print(resp.status_code)
+            info(resp.status_code)
             if resp.status_code == 302:
-                print(resp.headers["Location"])
+                info(resp.headers["Location"])
                 login_success_page = resp.headers["Location"]
                 break
                 # log to ML dataset
                 # shutil.copyfile("capcha.jpg", f"dataset/{ver_code}.jpg")
             elif resp.status_code == 200:
                 if resp.text.find("帳號或密碼錯誤，請重新輸入!") != -1:
-                    print(f"user {username} has wrong password !", file=sys.stderr)
+                    info(f"user {username} has wrong password !", file=sys.stderr)
                     exit(0)
                 elif resp.text.find("圖型驗證碼輸入有誤，請重新輸入") != -1:
-                    print("retry ocr")
+                    info("retry ocr")
                 elif resp.text.find("您的密碼即將到期") != -1 or resp.text.find("建議您立即變更密碼，是否立即變更？") != -1:
-                    print("retry login")
+                    info("retry login")
                     with sess.post(logon_url, headers=user_headers, data={
                         "__EVENTTARGET": "",
                         "__EVENTARGUMENT": "",
@@ -297,18 +298,18 @@ def main(
                         "ctl00$CPH1$confirm_txt": "",
                         "ctl00$CPH1$btnRelogin": "" 
                     }, allow_redirects=False) as resp2:
-                        print(resp2.status_code)
+                        info(resp2.status_code)
                         if resp2.status_code != 302:
-                            print("relogin failed")
+                            info("relogin failed")
                             exit(-1)
-                        print(resp2.headers["Location"])
+                        info(resp2.headers["Location"])
                         login_success_page = resp2.headers["Location"]
                         break
                 else:
-                    print("200 with unknowned situation ... QQ")
+                    info("200 with unknowned situation ... QQ")
                     exit(-1)
             else:
-                print(f"{resp.status_code} unknowned situation ... QQ")
+                info(f"{resp.status_code} unknowned situation ... QQ")
                 exit(-1)
     # get cookie
     send_get_req_txt(sess, login_success_page)
@@ -320,18 +321,18 @@ def main(
 
         st_date = (2022, month, dt)
         en_date = (2022, month, dt)
-        print(f"process day {dt}")
+        info(f"process day {dt}")
         while True:
             cids, cids_time = query_course(sess, pg_idx, st_date, en_date)
             cids = [ query_correct_course_id_by_fancybox(sess, sig_cid, st_date)[f"{st_date[0]}-{str(st_date[1]).zfill(2)}-{str(st_date[2]).zfill(2)}"] for sig_cid in cids ]
             if pg_idx != 1 and set(cids).issubset(all_course):
-                print("detect duplicated course")
+                info("detect duplicated course")
                 break
             if cids == []:
-                print(f"detect null page on {pg_idx}")
+                info(f"detect null page on {pg_idx}")
                 break
             all_course += cids
-            print(cids)
+            info(cids)
             
             add_time(cids, cids_time)
             
@@ -343,8 +344,8 @@ def main(
             continue
         with sess.get("https://portal.wda.gov.tw/mooc/print_profile.php?print=1", headers=user_headers) as resp:
             if resp.status_code != 200:
-                print(f"status code:{resp.status_code}")
-                print(resp.text)
+                info(f"status code:{resp.status_code}")
+                info(resp.text)
                 exit(-1)
 
             with open(f"{username}/" + fname[:-4]+f"{str(st_date[1]).zfill(2)}{str(st_date[2]).zfill(2)}"+fname[-4:], 'wb') as f:
@@ -354,9 +355,9 @@ def main(
     
     send_get_req_txt(sess, "https://portal.wda.gov.tw/mooc/co_search_record.php")
     for i in range(1, 32):
-        print(f"process day {i}")
+        info(f"process day {i}")
         download_region(sess, (2022, st_date[1], i), f"{username}/勞動部勞動力發展數位服務平台線上課程學習紀錄{str(st_date[1]).zfill(2)}.{str(i).zfill(2)}.pdf") 
-    print(f"total_time:{total_time}")
+    info(f"total_time:{total_time}")
     return total_time
 if __name__ == "__main__":
     pytesseract.pytesseract.tesseract_cmd = "C:\\Users\\User\\Documents\\softwares\\tesseract-ocr\\tesseract.exe"
@@ -372,11 +373,11 @@ if __name__ == "__main__":
             username = row[1]
             user_email = row[4]
             passwd = row[5]
-            print(username, user_email, passwd)
+            info(username, user_email, passwd)
             if not os.path.exists(username):
                 os.mkdir(username)
             #main(user_email, passwd, username + ".pdf")
-            print(f"total_time: {total_time} min")
+            info(f"total_time: {total_time} min")
             with open('time.csv', 'a', newline='', encoding="utf-8") as f_object:  
                 # Pass the CSV  file object to the writer() function
                 writer_object = writer(f_object)

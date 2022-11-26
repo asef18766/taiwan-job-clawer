@@ -2,13 +2,13 @@ import csv
 import os
 from typing import List
 from PyPDF2 import PdfFileReader, PdfFileWriter
-
+from logging import info
 for com in [
     "高桀"
 ]:
     users = []
     with open('account.csv', newline='', encoding="utf-8") as csvfile:
-        print(f"processing {com}")
+        info(f"processing {com}")
         rows = csv.reader(csvfile)
         for rid, row in enumerate(rows):
             if row[2] != com:

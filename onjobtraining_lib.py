@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 import csv
 from datetime import datetime
 import sys
+from logging import info
 
 def create_sess(
     account="L120966821",
@@ -37,7 +38,7 @@ def create_sess(
         res = resp.json()
         if not res["IsSuccess"]:
             if len(res["ExceptionMessage"]) == 0:
-                print("dectect invaild account or password", file=sys.stderr)
+                info("dectect invaild account or password", file=sys.stderr)
                 exit(0)
             else:
                 raise Exception(res["ExceptionMessage"])
@@ -64,7 +65,7 @@ def append_to_csv(fname: str, line: List[str]):
 
 def del_course(sess: requests.Session, cid:str):
     with sess.get(f"https://onjobtraining.wda.gov.tw/WdaRestart/Api/Labor/DeleteCourseRegisterAtHome/?registerId={cid}") as resp:
-        print(resp.json())
+        info(resp.json())
 
 def add_course(sess: requests.Session, dates: List[Tuple[int, int, int]], time_period: Tuple[Tuple[int, int], Tuple[int, int]]):
     usr_dates = [
@@ -77,10 +78,15 @@ def add_course(sess: requests.Session, dates: List[Tuple[int, int, int]], time_p
         datetime(dates[0][0], dates[0][1], dates[0][2],
                  time_period[1][0], time_period[1][1], 0)
     ]
+    info(f"time peroid start: {tp[0]}")
+    info(f"time peroid end:   {tp[1]}")
     hrs, mins = (tp[1] - tp[0]).seconds // 3600, ((tp[1] - tp[0]).seconds // 60) % 60
     apply_info = []
 
-    print("GetCaseNoListAtHome")
+    info(f"hrs: {hrs}")
+    info(f"min: {mins}")
+    
+    info("GetCaseNoListAtHome")
     with sess.get("https://onjobtraining.wda.gov.tw/WdaRestart/Api/Labor/GetCaseNoListAtHome/") as resp:
         data = resp.json()
 
@@ -96,16 +102,16 @@ def add_course(sess: requests.Session, dates: List[Tuple[int, int, int]], time_p
                 apply_info.append(d)
 
     if len(apply_info) == 0:
-        print("detect empty apply plan", file=sys.stderr)
+        info("detect empty apply plan", file=sys.stderr)
         exit(0)
     elif len(apply_info) != 1:
-        print("detect multi apply plan", file=sys.stderr)
+        info("detect multi apply plan", file=sys.stderr)
         exit(0)
     
     apply_info = apply_info[0]
-    # print(apply_info)
+    # info(apply_info)
     for d in usr_dates:
-        print("SaveCourseRegisterAtHome:", d)
+        info(f"SaveCourseRegisterAtHome:{d}")
         with sess.post("https://onjobtraining.wda.gov.tw/WdaRestart/Api/Labor/SaveCourseRegisterAtHome/", json={
             "registerId": "", 
             "isWithdraw": False, 
@@ -116,40 +122,40 @@ def add_course(sess: requests.Session, dates: List[Tuple[int, int, int]], time_p
             "expectedDate": d.strftime("%Y-%m-%d"), 
             "expectedTimeStart": str(tp[0].hour).zfill(2), 
             "expectedTimeEnd": str(tp[1].hour).zfill(2), 
-            "expectedTimeStartMin": str(tp[0].min).zfill(2), 
-            "expectedTimeEndMin": str(tp[1].min).zfill(2),
+            "expectedTimeStartMin": str(tp[0].minute).zfill(2), 
+            "expectedTimeEndMin": str(tp[1].minute).zfill(2),
             "minDate": apply_info["reduceStart"], 
             "expectedHours": hrs, 
             "expectedMinute": mins
             }) as resp:
             if resp.status_code != 200 or (resp.json()["data"] != "儲存成功" and resp.json()["message"] != "此課程時間已與其他時間重複,無法登錄"):
-                print(resp.status_code)
+                info(resp.status_code)
                 raise Exception(resp.text)
     usr_dates_fmt = [ d.strftime("%Y-%m-%dT00:00:00") for d in usr_dates ]
-    print("start QueryCourseReplayAtHome")
+    info("start QueryCourseReplayAtHome")
     with sess.get("https://onjobtraining.wda.gov.tw/WdaRestart/Api/Labor/QueryCourseReplayAtHome/?param.laborId=&param.keyword=&param.sorting=CreatedDate&param.sortingDesc=true&param.currentPage=1&param.pageSize=1000&") as resp:
         data = resp.json()["data"]
-        print("got QueryCourseReplayAtHome")
+        info("got QueryCourseReplayAtHome")
         for d in data:
             if d["expectedDate"] in usr_dates_fmt:
                 with sess.post("https://onjobtraining.wda.gov.tw/WdaRestart/Api/Labor/SaveCourseReplayAtHome/", json={
                     "registerId":d["registerId"],
                     "expectedDate":d["expectedDate"],
-                    "actualTimeStart":d["expectedTimeStart"],
-                    "actualTimeEnd":d["expectedTimeEnd"],
-                    "actualTimeStartMin":d["expectedTimeStartMin"],
-                    "actualTimeEndMin":d["expectedTimeEndMin"],
-                    "actualHours":d["expectedHours"],
-                    "actualMinute":d["expectedMinute"],
+                    "actualTimeStart":str(tp[0].hour).zfill(2),
+                    "actualTimeEnd":str(tp[1].hour).zfill(2),
+                    "actualTimeStartMin":str(tp[0].minute).zfill(2),
+                    "actualTimeEndMin":str(tp[1].minute).zfill(2),
+                    "actualHours":hrs,
+                    "actualMinute":mins,
                     "isAttend":False,
                     "isAttendDisplay":None,
                     "caseNo":None,
                     "applyDate":d["applyDate"]
                 }) as resp:
-                    print("SaveCourseReplayAtHome:", d["expectedDate"])
+                    info(f"SaveCourseReplayAtHome: {d['expectedDate']}")
                     if resp.status_code != 200 or resp.json()["data"] != "儲存成功":
-                        print(resp.status_code)
-                        print(resp.text)
+                        info(resp.status_code)
+                        info(resp.text)
                         raise Exception()
 
 
@@ -168,11 +174,11 @@ def main():
                 continue
             '''
             try:
-                print(f"processing {usr_r_name}...")
+                info(f"processing {usr_r_name}...")
                 sess = create_sess(usr_id, usr_pw)
-                print("login done!")
+                info("login done!")
             except:
-                print(f"{usr_r_name} can not login!", file=open(
+                info(f"{usr_r_name} can not login!", file=open(
                     "except.log", "a", encoding="utf-8"))
                 continue
             MONTH = 10

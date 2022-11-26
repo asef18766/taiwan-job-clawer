@@ -4,6 +4,8 @@ from requests import Session
 from pprint import pprint
 from datetime import datetime
 import csv
+from logging import info
+
 def datetime_from_tw_fmt(s:str)->datetime:
     y, m, d = s.split("/")
     return datetime(int(y) + 1911, int(m), int(d))
@@ -34,7 +36,7 @@ def main():
         for idx, row in enumerate(rows):
             if idx < 92:
                 continue
-            print(f"processing {row[1]}")
+            info(f"processing {row[1]}")
             sess = create_sess(row[3], row[6])
             append_to_csv("audit.csv", [row[1], str(get_audit_result(sess, (2022, 11)))])
 if __name__ == "__main__":
