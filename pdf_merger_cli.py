@@ -1,4 +1,5 @@
 from os import chdir
+import os
 from typing import List
 from PyPDF2 import PdfFileReader, PdfFileWriter
 from logging import info
@@ -7,11 +8,11 @@ from datetime import datetime
 import argparse
 
 def merge_to_pdfs(users:List[str], com:str):
-    users = []
-    
+    info(f"user: {users}")
+    info(f"com: {com}")
     pdfs:List[str] = []
     for folder in users:
-        pdfs += [f"{folder}/{i}" for i in sorted(os.listdir(folder))]
+        pdfs += [f"{folder}/{i}" for i in sorted(os.listdir(folder)) if i.endswith(".pdf")]
     
     writer = PdfFileWriter()
 
@@ -31,6 +32,7 @@ def main():
     
     chdir(args.work_dir)
     create_logger_to_file(datetime.now().strftime("%Y-%m-%d-%H-%M-%S") + ".log_merger")
+    info(f"arg obtain user count: {args.users}")
     merge_to_pdfs(args.users, args.com)
     
 if __name__ == "__main__":
