@@ -17,6 +17,7 @@ def merge_to_pdfs(users:List[str], com:str):
     writer = PdfFileWriter()
 
     for pdf_path in pdfs:
+        info(f"merging {pdf_path}")
         rd = PdfFileReader(pdf_path)
         for i in range(len(rd.pages)):
             writer.addPage(rd.getPage(i))
