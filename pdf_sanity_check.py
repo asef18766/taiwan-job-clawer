@@ -21,7 +21,8 @@ def main():
     for i in dfs_listdir(args.work_dir):
         with open(i, "rb") as fp:
             if fp.read(4) != b"%PDF":
-                print(f"detect invailed pdf {i}")
+                from base64 import b64encode
+                print(f"detect invailed pdf {b64encode(i.encode()).decode()}")
 
 if __name__ == "__main__":
     main()
