@@ -22,7 +22,8 @@ def merge_to_pdfs(users:List[str], com:str):
         # sanity check
         with open(pdf_path, "rb") as fp:
             if fp.read(4) != b"%PDF":
-                print(f"detect invalid file {pdf_path}", file=sys.stderr)
+                from base64 import b64encode
+                print(f"detect invalid file {b64encode(pdf_path.encode()).decode()}", file=sys.stderr)
                 exit(-1)
     
         rd = PdfFileReader(pdf_path)
