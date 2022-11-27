@@ -6,6 +6,7 @@ from logging import info
 from utils import create_logger_to_file
 from datetime import datetime
 import argparse
+import sys
 
 def merge_to_pdfs(users:List[str], com:str):
     info(f"user: {users}")
@@ -18,6 +19,12 @@ def merge_to_pdfs(users:List[str], com:str):
 
     for pdf_path in pdfs:
         info(f"merging {pdf_path}")
+        # sanity check
+        with open(pdf_path, "rb") as fp:
+            if fp.read(4) != b"%PDF":
+                print(f"detect invalid file {pdf_path}", file=sys.stderr)
+                exit(-1)
+    
         rd = PdfFileReader(pdf_path)
         for i in range(len(rd.pages)):
             writer.addPage(rd.getPage(i))
