@@ -361,9 +361,10 @@ def main(
     
     send_get_req_txt(sess, "https://portal.wda.gov.tw/mooc/co_search_record.php")
     for i in range(1, 32):
-        if not check_date_exsist(2022, month, dt):
+        if not check_date_exsist(2022, month, i):
+            info(f"date {i} not exsist, so skip :D")
             continue
-        info(f"process day {i}")
+        info(f"download form of day {i}")
         download_region(sess, (2022, st_date[1], i), f"{username}/勞動部勞動力發展數位服務平台線上課程學習紀錄{str(st_date[1]).zfill(2)}.{str(i).zfill(2)}.pdf") 
     info(f"total_time:{total_time}")
     return total_time
