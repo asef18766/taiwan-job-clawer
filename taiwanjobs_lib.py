@@ -196,8 +196,8 @@ def main(
     fname:str,
     month:int,
     username:str,
-    user_email="a0911971848@gmail.com",
-    user_passwd="Zzaaqq831109!"
+    user_email="",
+    user_passwd=""
 )->int:
     global total_time
     total_time = 0
