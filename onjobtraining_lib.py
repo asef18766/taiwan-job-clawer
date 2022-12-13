@@ -8,8 +8,8 @@ from logging import info
 from utils import datetime_from_tw_fmt, append_to_csv
 
 def create_sess(
-    account="L120966821",
-    passwd="Zzaaqq831109!"
+    account="",
+    passwd=""
 ) -> requests.Session:
     sess = requests.session()
     capcha_url = ""
